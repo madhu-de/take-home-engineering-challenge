@@ -70,10 +70,10 @@ namespace FoodTruckLocations
 
         private static void GetAddressPostalCode()
         {
-            Console.WriteLine("Please enter the current address line.");
+            Console.WriteLine("Please enter the current address line (optional).");
             currentAddressLine = Console.ReadLine();
 
-            Console.WriteLine("Please enter the current postal code.");
+            Console.WriteLine("Please enter the current postal code (required).");
             currentPostalCode = Console.ReadLine();
         }
 
