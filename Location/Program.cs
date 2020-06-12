@@ -3,11 +3,13 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 using BingMapsRESTToolkit;
 using GeoCoordinatePortable;
 
+[assembly: InternalsVisibleTo("FoodTruckLocationsTests")]
 namespace FoodTruckLocations
 {
     class Program
@@ -15,19 +17,17 @@ namespace FoodTruckLocations
         private const string BingMapsKey = "Ap9BwF3pMipJo19wG6au12NRI4HtkuFUgib9MktVxFkolOwZlGbp2kEpdxfuJ_FV";
         private const string FoodTruckJsonUrl = "https://data.sfgov.org/resource/rqzj-sfat.json";
 
-        private static string currentAddressLine;
-        private static string currentPostalCode;
-
         private static readonly HttpClient client = new HttpClient();
 
         static async Task Main()
         {
-            GetAddressPostalCode();
+            var currentAddressLine = GetAddress();
+            var currentPostalCode = GetPostalCode();
 
-            if (CheckCurrentAddressInput())
+            if (CheckCurrentAddressInput(ref currentAddressLine, ref currentPostalCode))
             {
                 //Get coordinate for the address/postal code input from the user
-                var currentCoordinates = await GetCurrentCoordinates();
+                var currentCoordinates = await GetCurrentCoordinates(currentAddressLine, currentPostalCode);
 
                 currentCoordinates = await CheckCurrentCoordinates(currentCoordinates);
 
@@ -68,21 +68,29 @@ namespace FoodTruckLocations
             }
         }
 
-        private static void GetAddressPostalCode()
+        private static string GetAddress()
         {
             Console.WriteLine("Please enter the current address line (optional).");
-            currentAddressLine = Console.ReadLine();
+            var currentAddressLine = Console.ReadLine();
 
-            Console.WriteLine("Please enter the current postal code (required).");
-            currentPostalCode = Console.ReadLine();
+            return currentAddressLine;
         }
 
-        private static bool CheckCurrentAddressInput()
+        private static string GetPostalCode()
+        {
+            Console.WriteLine("Please enter the current postal code (required).");
+            var currentPostalCode = Console.ReadLine();
+
+            return currentPostalCode;
+        }
+
+        private static bool CheckCurrentAddressInput(ref string currentAddressLine, ref string currentPostalCode)
         {
             if (string.IsNullOrEmpty(currentPostalCode))
             {
                 Console.WriteLine("The postal code input is required to calculate the current coordinate and provide the closest food truck locations without which the program cannot continue.");
-                GetAddressPostalCode();
+                currentAddressLine = GetAddress();
+                currentPostalCode = GetPostalCode();
 
                 if (string.IsNullOrEmpty(currentPostalCode))
                 {
@@ -93,7 +101,7 @@ namespace FoodTruckLocations
             return true;
         }
 
-        private static async Task<Location> GetCurrentCoordinates()
+        internal static async Task<Location> GetCurrentCoordinates(string currentAddressLine, string currentPostalCode )
         {
             var currentLocationCoordinates = new Location { Type = "Point" };
             var currentAddress = new SimpleAddress { AddressLine = currentAddressLine, PostalCode = currentPostalCode };
@@ -136,15 +144,16 @@ namespace FoodTruckLocations
             if (currentCoordinates.Coordinates == null || currentCoordinates.Coordinates.Count != 2)
             {
                 Console.WriteLine("The coordinates for the current input location could not be retrieved. Please try again.");
-                GetAddressPostalCode();
-                CheckCurrentAddressInput();
-                currentCoordinates = await GetCurrentCoordinates();
+                string currentAddressLine = GetAddress();
+                string currentPostalCode = GetPostalCode();
+                CheckCurrentAddressInput(ref currentAddressLine, ref currentPostalCode);
+                currentCoordinates = await GetCurrentCoordinates(currentAddressLine, currentPostalCode);
             }
 
             return currentCoordinates;
         }
 
-        private static async Task<List<FoodTruckLocation>> GetFoodTruckLocations()
+        internal static async Task<List<FoodTruckLocation>> GetFoodTruckLocations()
         {
             List<FoodTruckLocation> foodTruckLocations = new List<FoodTruckLocation>();
 
@@ -165,7 +174,7 @@ namespace FoodTruckLocations
             return foodTruckLocations;
         }
 
-        private static List<FoodTruckLocation> CalculateDistancesToFoodTrucks(
+        internal static List<FoodTruckLocation> CalculateDistancesToFoodTrucks(
             Location currentLocationCoordinates, List<FoodTruckLocation> foodTruckLocations)
         {
             foreach (var foodTruckLocation in foodTruckLocations)
