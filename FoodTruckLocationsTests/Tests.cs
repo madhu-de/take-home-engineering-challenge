@@ -89,5 +89,31 @@ namespace Tests
             var difference = Math.Abs(expectedFTL.DistanceFromCurrentLocation * .00001);
             Assert.IsTrue(Math.Abs(expectedFTL.DistanceFromCurrentLocation - 473.83962683427654) <= difference);
         }
+
+        [Test]
+        public async Task TestCalculateDistancesToFoodTrucksAreSortedAscByDt()
+        {
+            var currentAddressLine = "865 Market St Westfield";
+            var currentPostalCode = "94103";
+
+            var currentCoordinates = await FoodTruckLocations.Program.GetCurrentCoordinates(currentAddressLine, currentPostalCode);
+            var foodTruckLocations = await FoodTruckLocations.Program.GetFoodTruckLocations();
+
+            var foodTruckLocationsWithDistance = FoodTruckLocations.Program.CalculateDistancesToFoodTrucks(currentCoordinates, foodTruckLocations);
+
+            Assert.IsNotNull(foodTruckLocationsWithDistance);
+            Assert.AreEqual(foodTruckLocationsWithDistance.Count, 644);
+
+            var fTL1 = foodTruckLocationsWithDistance[0];
+            var fTL2 = foodTruckLocationsWithDistance[1];
+            var fTL3 = foodTruckLocationsWithDistance[2];
+            var fTL4 = foodTruckLocationsWithDistance[3];
+            var fTL5 = foodTruckLocationsWithDistance[4];
+
+            Assert.IsTrue(fTL1.DistanceFromCurrentLocation <= fTL2.DistanceFromCurrentLocation);
+            Assert.IsTrue(fTL2.DistanceFromCurrentLocation <= fTL3.DistanceFromCurrentLocation);
+            Assert.IsTrue(fTL3.DistanceFromCurrentLocation <= fTL4.DistanceFromCurrentLocation);
+            Assert.IsTrue(fTL4.DistanceFromCurrentLocation <= fTL5.DistanceFromCurrentLocation);
+        }
     }
 }
