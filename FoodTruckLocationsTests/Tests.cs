@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using NUnit.Framework;
 
-//[assembly: LevelOfParallelism(1)]
 namespace Tests
 {
     public class Tests
